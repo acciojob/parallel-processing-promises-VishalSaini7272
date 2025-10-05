@@ -1,1 +1,25 @@
 /*  your css code here. If applicable */
+body {
+  font-family: Arial, sans-serif;
+  padding: 30px;
+  text-align: center;
+}
+
+#loading {
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+#error {
+  color: red;
+  margin-bottom: 12px;
+}
+
+#output img {
+  margin: 8px;
+  max-width: 200px;
+  display: inline-block;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+

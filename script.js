@@ -1,57 +1,76 @@
-// Select elements
+// Elements
 const output = document.getElementById("output");
 const loading = document.getElementById("loading");
 const errorDiv = document.getElementById("error");
 
-// Array of image URLs
+// Image URLs to download
 const imageUrls = [
   "https://picsum.photos/id/237/200/300",
   "https://picsum.photos/id/238/200/300",
   "https://picsum.photos/id/239/200/300"
 ];
 
-// Function to download one image (returns a Promise)
+// Create a promise that resolves with an <img> element when loaded, rejects on error
 function downloadImage(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.src = url;
 
+    // Attach handlers before setting src to avoid race conditions
     img.onload = () => resolve(img);
-    img.onerror = () => reject(`Failed to load image: ${url}`);
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+
+    // Optional: improve decoding behavior in modern browsers
+    if ("decoding" in img) img.decoding = "async";
+
+    // Start loading
+    img.src = url;
+    // Provide a helpful alt for accessibility
+    img.alt = `Image from ${url}`;
   });
 }
 
-// Main function to download all images
-function downloadImages() {
-  // Clear previous content
-  output.innerHTML = "";
-  errorDiv.innerHTML = "";
-
-  // Show loading spinner
+function showLoading() {
   loading.style.display = "block";
+}
 
-  // Create array of Promises
-  const promises = imageUrls.map(url => downloadImage(url));
+function hideLoading() {
+  loading.style.display = "none";
+}
 
-  // Use Promise.all to wait for all images to load
+function clearOutputAndError() {
+  output.innerHTML = "";
+  errorDiv.textContent = "";
+}
+
+function downloadImages() {
+  clearOutputAndError();
+  showLoading();
+
+  // map urls to promises
+  const promises = imageUrls.map((url) => downloadImage(url));
+
+  // wait for all or catch first failure
   Promise.all(promises)
-    .then(images => {
-      // Hide loading spinner
-      loading.style.display = "none";
-
-      // Append all images to output
-      images.forEach(img => {
+    .then((images) => {
+      hideLoading();
+      // append all images to output
+      images.forEach((img) => {
+        // give each image a consistent width (optional)
+        img.width = 200;
         output.appendChild(img);
       });
     })
-    .catch(err => {
-      // Hide loading spinner
-      loading.style.display = "none";
-
-      // Show error message
-      errorDiv.textContent = err;
+    .catch((err) => {
+      hideLoading();
+      // display descriptive error message in #error (use .message if Error)
+      errorDiv.textContent = err && err.message ? err.message : String(err);
     });
 }
 
-// Call function on page load
-downloadImages();
+// Start downloads after DOM is ready so #loading is present for tests immediately
+document.addEventListener("DOMContentLoaded", () => {
+  // Ensure loading is visible right away (tests may read it immediately)
+  showLoading();
+  // Kick off the downloads
+  downloadImages();
+});
